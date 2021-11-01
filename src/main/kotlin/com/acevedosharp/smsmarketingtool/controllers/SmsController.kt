@@ -1,11 +1,11 @@
 package com.acevedosharp.smsmarketingtool.controllers
 
-import com.acevedosharp.smsmarketingtool.services.SmsSenderService
+import com.acevedosharp.smsmarketingtool.services.sms.ISmsSenderService
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 
 @Controller
-class SmsController(private val smsSenderService: SmsSenderService) {
+class SmsController(private val smsSenderService: ISmsSenderService) {
 
     class SmsCampaign(
         val message: String,
@@ -16,7 +16,11 @@ class SmsController(private val smsSenderService: SmsSenderService) {
         val target: String,
         val wasSent: Boolean,
         val message: String
-    )
+    ) {
+        override fun toString(): String {
+            return "SmsSendStatus(target='$target', wasSent=$wasSent, message='$message')"
+        }
+    }
 
     @PostMapping
     @ResponseBody

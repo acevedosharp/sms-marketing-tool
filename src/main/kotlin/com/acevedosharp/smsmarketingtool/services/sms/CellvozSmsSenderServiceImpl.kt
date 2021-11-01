@@ -1,4 +1,4 @@
-package com.acevedosharp.smsmarketingtool.services
+package com.acevedosharp.smsmarketingtool.services.sms
 
 import com.acevedosharp.smsmarketingtool.GlobalHelpers
 import com.acevedosharp.smsmarketingtool.GlobalHelpers.toJsonStringJackson
@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-class SmsSenderService {
+class CellvozSmsSenderServiceImpl : ISmsSenderService {
     @Value("\${cellvoz.accountNumber}")
     private lateinit var accountNumber: String
 
@@ -56,7 +56,7 @@ class SmsSenderService {
         token = newToken
     }
 
-    fun executeCampaign(message: String, targets: List<String>): List<SmsController.SmsSendStatus> {
+    override fun executeCampaign(message: String, targets: List<String>): List<SmsController.SmsSendStatus> {
         val futures = targets.map { target: String ->
             return@map httpClient
                 .prepareGet("https://api.cellvoz.co/v2/sms/single")

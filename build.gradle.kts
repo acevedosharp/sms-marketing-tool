@@ -22,6 +22,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.asynchttpclient:async-http-client:2.12.3")
 	testImplementation("org.springframework.boot:spring-boot-starter-test:2.5.5")
+	testImplementation(kotlin("test"))
 }
 
 tasks.withType<KotlinCompile> {
@@ -31,6 +32,6 @@ tasks.withType<KotlinCompile> {
 	}
 }
 
-tasks.withType<Test> {
+tasks.test {
 	useJUnitPlatform()
 }
