@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SMS Marketing Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background: rgb(198,15,86);
+            background: linear-gradient(90deg, rgba(198,15,86,1) 0%, rgba(12,54,108,1) 50%, rgba(198,15,86,1) 100%);
+        }
+        textarea {
+            vertical-align: top;
+        }
+        .action-text {
+            color: blue;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .green-button {
+            padding: 5px 10px;
+            background-color: #59bb59;
+            display: inline-block;
+            cursor: pointer;
+            color: black;
+        }
+        .content-box {
+            width: 500px;
+            padding: 10px 20px 30px 20px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+<div id="app" class="content-box">
+    <h1>SMS Marketing Tool</h1>
+    <h2>Create an SMS campaign</h2>
+    <div style="vertical-align: middle;">
+        <label>
+            Message
+            <textarea id="campaign-message-ta" cols="32" rows="3" v-model="message"></textarea>
+        </label>
+    </div>
+
+    <h3>Add a new target</h3>
+    <div>
+        <label><span>Phone Number (Colombia only)</span>
+            <input type="text" v-model="createTargetInput">
+        </label>
+        <div v-on:click="addTarget()" class="green-button">Add</div>
+    </div>
+    <ul v-if="targets.length > 0">
+        <li v-for="target in targets">
+            {{target}}
+            <span class="action-text" v-on:click="deleteTarget(target)">delete</span>
+        </li>
+    </ul>
+    <p v-else>There are no targets yet</p>
+    <div v-on:click="createCampaign()" class="green-button" style="font-size: 24px; margin-top: 10px">Create Campaign</div>
+    <p v-if="loadingCampaignCreation" style="font-size: 18px; font-weight: bold">Loading...</p>
+    <p v-if="createCampaignError" style="color: red">There was an error with the API.</p>
+
+    <div v-if="!!apiResponse">
+        <h2>SMS Send Statuses</h2>
+        <table>
+            <tr>
+                <th scope="col">Target</th>
+                <th scope="col">Status</th>
+                <th scope="col">Message</th>
+            </tr>
+            <tr v-for="sendStatus in apiResponse">
+                <th scope="row">{{ sendStatus.target }}</th>
+                <td>
+                    <span v-if="sendStatus.wasSent" style="color: green; font-weight: bold">Sent</span>
+                    <span v-else style="color: red; font-weight: bold">Not sent</span>
+                </td>
+                <td>{{ sendStatus.message }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            message: '',
+            createTargetInput: '',
+            targets: [],
+
+            createCampaignError: false,
+            loadingCampaignCreation: false,
+
+            apiResponse: null
+        },
+        methods: {
+            addTarget() {
+                this.targets.push(this.createTargetInput)
+                this.createTargetInput = ''
+            },
+            deleteTarget(targetToDelete) {
+              this.targets = this.targets.filter(target => target !== targetToDelete)
+            },
+            createCampaign() {
+                this.createCampaignError = false
+                this.loadingCampaignCreation = true
+                this.apiResponse = null
+
+                const xhr = new XMLHttpRequest()
+                xhr.open("POST", '/', true)
+                xhr.setRequestHeader('Content-Type', 'application/json')
+                xhr.onloadend = function () {
+                    this.xhrCompletion = true
+                    if (this.status === 200) {
+                        this.apiResponse = JSON.parse(this.responseText)
+                        this.createCampaignError = false
+                    } else {
+                        this.apiResponse = null
+                        this.createCampaignError = true
+                    }
+                };
+                xhr.send(JSON.stringify({
+                    message: this.message,
+                    targets: this.targets
+                }));
+                this.message = ''
+                this.createTargetInput = ''
+                this.targets = []
+
+                this.checkXhrCompletionNoCallbackRecursive(xhr, 1)
+            },
+            // this sucks but it was the only thing I came up with
+            checkXhrCompletionNoCallbackRecursive(xhr, count) {
+                if (count > 500) {
+                    this.apiResponse = null
+                    this.createCampaignError = true
+                    return
+                }
+
+                if (!!xhr.xhrCompletion) {
+                    this.apiResponse = xhr.apiResponse
+                    this.createCampaignError = xhr.createCampaignError
+                    this.loadingCampaignCreation = false
+                } else {
+                    setTimeout(() => this.checkXhrCompletionNoCallbackRecursive(xhr, count+1), 50)
+                }
+            }
+        },
+    })
+</script>
+</body>
+</html>
